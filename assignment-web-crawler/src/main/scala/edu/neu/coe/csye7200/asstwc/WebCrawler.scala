@@ -1,12 +1,13 @@
 package edu.neu.coe.csye7200.asstwc
 
 import edu.neu.coe.csye7200.asstwc.WebCrawler.{canParse, wget}
+
 import java.net.{MalformedURLException, URL}
 import scala.collection.immutable.Queue
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.{BufferedSource, Source}
-import scala.language.postfixOps
+import scala.language.{higherKinds, postfixOps}
 import scala.util._
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
@@ -139,15 +140,23 @@ object WebCrawler extends App {
     def wget(url: URL)(implicit ec: ExecutionContext): Future[Seq[URL]] = {
         // Hint: write as a for-comprehension, using the method createURL(Option[URL], String) to get the appropriate URL for relative links
         // 16 points.
-        def getURLs(ns: Node): Seq[Try[URL]] = ??? // TO BE IMPLEMENTED
+        def getURLs(ns: Node): Seq[Try[URL]] = for(h <- ns \\ "a" map {_ \@ "href"})
+            yield validateURL(createURL(Option(url),h))
 
         def getLinks(g: String): Try[Seq[URL]] = {
+
             val ny: Try[Node] = HTMLParser.parse(g) recoverWith { case f => Failure(new RuntimeException(s"parse problem with URL $url: $f")) }
             for (n <- ny; uys = getURLs(n); us <- MonadOps.sequenceForgiveSubsequent(uys) { case _: WebCrawlerProtocolException => true; case _ => false }) yield us
         }
         // Hint: write as a for-comprehension, using getURLContent (above) and getLinks above. You will also need MonadOps.asFuture
         // 9 points.
-        ??? // TO BE IMPLEMENTED
+
+        for{
+            content <- getURLContent(url)
+            links <- MonadOps.asFuture(getLinks(content))
+        } yield links
+
+
     }
 
     /**

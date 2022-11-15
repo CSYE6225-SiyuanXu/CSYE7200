@@ -30,8 +30,10 @@ class WebCrawlerSpec extends AnyFlatSpec with should.Matchers with Futures with 
     }
 
     "wget(URL)" should s"succeed for $goodURL" taggedAs Slow in {
+
         val usfy = for {u <- Try(new URL(goodURL))} yield WebCrawler.wget(u)
-        whenReady(MonadOps.flatten(usfy), timeout(Span(6, Seconds))) { us => us.length shouldBe 33 }
+
+        whenReady(MonadOps.flatten(usfy), timeout(Span(6, Seconds))) { us => us.length shouldBe 33}
     }
 
     it should s"not succeed for $badURL" taggedAs Slow in {
